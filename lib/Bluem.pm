@@ -16,38 +16,28 @@ get "/v1/list" => sub {
 post "/v1/:dbname/:table" => sub {
     my ($app, $req) = @_;
     my $json  = $req->json_content;
+    my $dbname = $req->captured->{dbname};
     my $table = $req->captured->{table};
-    my $db    = db($req);
-    my $now   = time;
-    $db->bulk_insert($table => [qw[id data ctime]], [
-        map {$_->{ctime} = $now; $_}
-        @{$json->{rows}}
-    ]);
+    my $method = "add_$table";
+    Bluem::DB->$method($dbname => @{$json->{rows}});
     {message => "done"};
 };
 
-get "/v1/:dbname/:table" => sub {
+get "/v1/:dbname" => sub {
     my ($app, $req) = @_;
     my $page = $req->param('page') || 1;
     my $num  = $req->param('rows') || 10;
     my $dbname = $req->captured->{dbname};
-    my @rows = Bluem::DB->get_filtered(dbname => $dbname, page => $page, num => $num);
-    {rows => [@rows]};
+    Bluem::DB->get_filtered($dbname => (page => $page, num => $num));
 };
 
 post "/v1/:dbname/:table/delete" => sub {
     my ($app, $req) = @_;
-    my $db    = db($req);
-    my $table = $req->captured->{table};
-    $db->delete($table => {});
+    my $dbname = $req->captured->{dbname};
+    my $table  = $req->captured->{table};
+    Bluem::DB->flush($dbname => $table);
     {message => "done"};
 };
-
-sub db {
-    my $req    = shift;
-    my $dbname = $req->captured->{dbname};
-    Bluem::DB->init($dbname);    
-}
 
 1;
 __END__
