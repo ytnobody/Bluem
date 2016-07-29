@@ -88,12 +88,37 @@ subtest 'get filtered 1000 - 100' => sub {
     ok $end-$begin < 5, '[1000 - 100]time elapsed 5 sec. or faster: we got '. ($end-$begin);
 };
 
-
 subtest 'get filtered 1000 - 500' => sub {
     $test->request(POST '/v1/foo/blacklist/delete');
     my $rows = [map {$_ * 3} 1 .. 500];
     my $res = $test->request(
         POST '/v1/foo/blacklist', 
+        'Content-Type' => 'application/json',
+        'Content' => $JSON->encode({
+            rows => $rows,
+        })
+    );
+
+    my $begin = Time::HiRes::time();
+    my $res = $test->request(GET '/v1/foo?page=20&rows=20');
+    my $end = Time::HiRes::time();
+    ok $res->is_success, 'request succeed';
+    ok $end-$begin < 5, '[1000 - 500]time elapsed 5 sec. or faster: we got '. ($end-$begin);
+};
+
+subtest 'get filtered 1000 - 500000' => sub {
+    my $rows = [map {$_ * 3} 1 .. 500000];
+    $test->request(
+        POST '/v1/foo/blacklist', 
+        'Content-Type' => 'application/json',
+        'Content' => $JSON->encode({
+            rows => $rows,
+        })
+    );
+
+    $rows = [1 .. 1000];
+    $test->request(
+        POST '/v1/foo/entry', 
         'Content-Type' => 'application/json',
         'Content' => $JSON->encode({
             rows => $rows,
