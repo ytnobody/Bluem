@@ -7,19 +7,12 @@ use Bluem::DB;
 
 our $VERSION = "0.01";
 
-get "/v1/list" => sub {
-    my ($app, $req) = @_;
-    my @db_list = Bluem::DB->list;
-    {dbs => [@db_list]};
-};
-
 post "/v1/:dbname/:table" => sub {
     my ($app, $req) = @_;
     my $json  = $req->json_content;
     my $dbname = $req->captured->{dbname};
     my $table = $req->captured->{table};
-    my $method = "add_$table";
-    Bluem::DB->$method($dbname => @{$json->{rows}});
+    Bluem::DB->new($dbname)->add($table => @{$json->{rows}});
     {message => "done"};
 };
 
@@ -28,14 +21,14 @@ get "/v1/:dbname" => sub {
     my $page = $req->param('page') || 1;
     my $num  = $req->param('rows') || 10;
     my $dbname = $req->captured->{dbname};
-    Bluem::DB->get_filtered($dbname => (page => $page, num => $num));
+    Bluem::DB->new($dbname)->get_filtered(page => $page, num => $num);
 };
 
 post "/v1/:dbname/:table/delete" => sub {
     my ($app, $req) = @_;
     my $dbname = $req->captured->{dbname};
     my $table  = $req->captured->{table};
-    Bluem::DB->flush($dbname => $table);
+    Bluem::DB->new($dbname)->flush($table);
     {message => "done"};
 };
 

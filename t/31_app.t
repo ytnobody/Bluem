@@ -18,12 +18,7 @@ subtest 'add entry' => sub {
         POST '/v1/foo/entry', 
         'Content-Type' => 'application/json', 
         'Content'      => $JSON->encode({
-            rows => [
-                {id => 'foo1', data => 'aaaa1'},
-                {id => 'foo2', data => 'aaaa2'},
-                {id => 'foo3', data => 'aaaa3'},
-                {id => 'foo4', data => 'aaaa4'},
-            ],
+            rows => [qw/foo1 foo2 foo3 foo4/],
         })
     );
     ok $res->is_success, 'request succeed';
@@ -40,19 +35,12 @@ subtest 'add blacklist' => sub {
     ok $res->is_success, 'request succeed';
 };
 
-subtest 'get dblist' => sub {
-    my $res = $test->request(GET '/v1/list');
-    ok $res->is_success, 'request succeed';
-    my $data = $JSON->decode($res->content);
-    is_deeply $data, {dbs => ['foo'], status => '200'};
-};
-
 subtest 'get filtered' => sub {
     my $res = $test->request(GET '/v1/foo');
     ok $res->is_success, 'request succeed';
     my $data = $JSON->decode($res->content);
     isa_ok $data->{rows}, 'ARRAY';
-    is_deeply [map {$_->{id}} @{$data->{rows}}], [qw/foo1 foo3 foo4/];
+    is_deeply $data->{rows}, [qw/foo1 foo3 foo4/];
     is $data->{next_page}, 0; 
 };
 
